@@ -1,0 +1,90 @@
+---
+title: "Course 5 Week 2 Project"
+author: "Sarah M. Duyos"
+date: "January 21, 2017"
+output: html_document
+---
+
+## 1. Reading in the dataset and/or processing the data
+
+```{r}
+data <- read.csv("activity.csv")
+```
+## 2.Histogram of the total number of steps taken each day
+
+```{r}
+totalsteps <- tapply(data$steps, data$date, sum, na.rm = TRUE)
+hist(totalsteps, xlab="steps/day", ylab = "number observations", main = "Frequency of Steps per Day", breaks = 10)
+```
+
+
+## 3.Mean and median number of steps taken each day
+
+### Mean
+```{r}
+mean(totalsteps)
+```
+
+### Median
+
+```{r}
+median(totalsteps)
+```
+
+## 4.Time series plot of the average number of steps taken
+
+```{r}
+stepsintervalmean <- tapply(data$steps, data$interval, mean, na.rm = TRUE)
+plot(stepsintervalmean, type = "l", xlab = "time", ylab = "average steps", main = "Average of steps by 5-minute intervals")
+```
+
+## 5. The 5-minute interval that, on average, contains the maximum number of steps
+
+```{r}
+pos <- match(max(stepsintervalmean), stepsintervalmean)
+names(stepsintervalmean)[pos]
+```
+
+## 6.Code to describe and show a strategy for imputing missing data
+
+### Use average of 5-minutes interval over all days
+
+```{r}
+data1 <- data
+for (rowcnt in 1:nrow(data1)) 
+{
+  row = data1[rowcnt, ]
+  if (is.na(row$steps)) 
+  {
+    data1[rowcnt, "steps"]= stepsintervalmean[match(row$interval,names(stepsintervalmean))]
+  }
+}
+```
+
+## 7.Histogram of the total number of steps taken each day after missing values are imputed
+
+```{r}
+stepstotal1 <- tapply(data1$steps, data1$date, sum)
+hist(stepstotal1, xlab = "time", main = "Total steps per day after imputing values")
+```
+
+
+## 8.Panel plot comparing the average number of steps taken per 5-minute interval across weekdays and weekends
+
+```{r}
+alldays <- weekdays(as.Date(data1$date))
+weekends <- (alldays == "Saturday" | alldays == "Sunday")
+alldays[weekends] <- "weekend"
+alldays[!weekends] <- "weekday"
+alldays <- as.factor(alldays)
+data1$days <- alldays
+dataweekend <- subset(data1, days == "weekend")
+dataweekday <- subset(data1, days == "weekday")
+stepinterval1we <- tapply(dataweekend$steps, dataweekend$interval, mean)
+stepinterval1wd <- tapply(dataweekday$steps, dataweekday$interval, mean)
+
+par(mfrow = c(2, 1))
+plot(stepinterval1we, type = "l", xlab = "time", ylab = "number steps", main = "Average number steps (5-min interval) Weekend")
+plot(stepinterval1wd, type = "l", xlab = "time", ylab = "number steps", main = "Average number steps (5-min interval) Weekday")
+```
+
